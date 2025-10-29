@@ -1,0 +1,2 @@
+Data/train_seq_top10_plus_atomic_top2_by_average_precision.csv filter=lfs diff=lfs merge=lfs -text
+Data/test_seq_top10_plus_atomic_top2_by_average_precision.csv filter=lfs diff=lfs merge=lfs -text

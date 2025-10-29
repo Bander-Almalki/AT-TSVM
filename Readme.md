@@ -13,7 +13,7 @@ cd AT_TSVM
 conda env create -f environment.yml
 conda activate AT_TSVM
 ```
-
+## About
 - The Data folder contains the dataset in CSV format. The features can be categorized into 2 main categories. Atomic based features and sequence based features.
 
 ### Sequence-Based Features:
@@ -23,6 +23,7 @@ conda activate AT_TSVM
 - A moving window of size 3 is also applied (i + 1, i, i − 1), where i is the residue in the first helix
 - the total number of sequence based features are 300 features per residue.
 - PCA is used to reduce the feature space by ranking the PCAs based on their contact predictive power then choosing the Top 10 PCAs
+- To extract the complete sequence-based features, please refer to [DeepHelicon Model](https://github.com/2003100127/deephelicon/tree/master)
 
 ### Structure-Based Features
 - 5 Features per residue
@@ -35,5 +36,5 @@ conda activate AT_TSVM
 - result in 40 features
 - PCA is applied to reduce the feature space
 - top 2 PCAs are used.
-
+- To extract the complete structure-based features, please refer to [Structural_Features](https://link.springer.com/chapter/10.1007/978-3-031-34960-7_25)
 ## The main scripts:
