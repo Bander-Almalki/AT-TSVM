@@ -1,7 +1,7 @@
 import numpy as np
 import sklearn.svm as svm
 import time
-from sklearn.metrics import accuracy_score,f1_score
+from sklearn.metrics import accuracy_score,f1_score, precision_score,recall_score,roc_auc_score
 import math
 KNN_prediction_scores={}
 KNN_f1_iter_scores={}
@@ -305,7 +305,7 @@ class TransductiveSVM(svm.SVC):
                 #update X3 with the new X2 values
                 X4 = np.vstack((X1, X2))
                 X3=np.copy(X4)
-                print ("X3 shape",X3.shape)
+                # print ("X3 shape",X3.shape)
                 # start_ind=X3.shape[0]-1+i
                 # print("x3 value, mean_at_feature",X3[start_ind,10])
 
@@ -385,7 +385,7 @@ class TransductiveSVM(svm.SVC):
                 reg.append(reg_in)
                 all_margin.append(margin_in)
                 obj_fun.append(obj_in)
-                # ========================
+                # ======================== Stop when margine size starts to decrease
                 #if len(all_margin)>2 and all_margin[-1]<all_margin[-2]:
                 #   break;
 
@@ -395,6 +395,9 @@ class TransductiveSVM(svm.SVC):
                 #=======> predicting inside inner <===========#
 
                 counter+=1
+
+                
+
 
 
 
@@ -417,7 +420,7 @@ class TransductiveSVM(svm.SVC):
         Y3=Y3.reshape(-1)
         end=time.time()
         print("The training finish in  "+str(end-t)+"  seconds")
-        return self
+        return self,f1_iter,all_margin,obj_fun
 
 
 

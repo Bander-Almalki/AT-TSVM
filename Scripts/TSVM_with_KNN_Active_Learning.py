@@ -1,11 +1,10 @@
-from sklearn.metrics.pairwise import linear_kernel
 import numpy as np
 import sklearn.svm as svm
 import time
-from sklearn.metrics import accuracy_score,f1_score
+from sklearn.metrics import accuracy_score,f1_score, precision_score,recall_score,roc_auc_score
 import math
-Active_prediction_score={}
-
+KNN_prediction_scores={}
+KNN_f1_iter_scores={}
 pred_iter=[]
 f1_iter=[]
 validaation_f1_10=[]
@@ -22,7 +21,9 @@ reg=[]
 prev=[]
 weights=[]
 intercept=[]
-class TransductiveSVM(svm.SVC):
+best_iter_index= 100
+# query_per_iter=2
+class TransductiveSVM(svm.SVC): 
     def __init__(self,kernel="linear",Cl=1,Cu=0.01,gamma=0.1,X2=None,maxiter=-1):
         '''
         Initial TSVM
@@ -155,7 +156,7 @@ class TransductiveSVM(svm.SVC):
 
             condition=self.checkCondition(Y2,eslack2) #CONDITION OF LOOP
             l=0
-            print("condition =================")
+            # print("condition =================")
 
             #calculating sum of slack i + slack j
 
@@ -165,6 +166,16 @@ class TransductiveSVM(svm.SVC):
 
             #Y_True[Y_True==0]=-1
             pred_outer=self.clf.predict(X2)
+
+            # calculating the margine
+
+
+            margin_norm=(np.linalg.norm(self.clf.coef_))
+            margin_out=2/margin_norm
+            obj_out=(margin_norm/2)+(self.Cl*np.sum(eslack))+C_plus*np.sum(eslack2[eslack2_positve])+C_minus*np.sum(eslack2[eslack2_negative])
+
+            obj_fun.append(obj_out)
+            all_margin.append(margin_out)
 
             accuracy_outer=accuracy_score(Y_True,pred_outer)
             f1_outer=f1_score(Y_True,pred_outer)
@@ -188,7 +199,7 @@ class TransductiveSVM(svm.SVC):
                 eslack2_positve=np.where(eslack2_with_label[:,1]==+1)
                 eslack2_negative=np.where(eslack2_with_label[:,1]==-1)
 
-                print("inside @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+                # print("inside @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
                 l+=1
 
                 i,j=self.getIndexCondition(Y2,eslack2)  #TAKE A POSITIVE AND NEGATIVE SET
@@ -294,7 +305,7 @@ class TransductiveSVM(svm.SVC):
                 print('y2_shape=',Y2.shape)
 
                 Y3=np.concatenate((Y1,Y2),axis=0)
-                print('.....')
+                # print('.....')
                 self.clf.fit(X3,Y3, sample_weight=sample_weight) #TRAINING WITH NEW LABELLING
 
                 if( counter>best_iter_index):
@@ -311,6 +322,7 @@ class TransductiveSVM(svm.SVC):
                   # Query the true labels for the selected instances
                   new_X = X2[top_indices]
                   new_y = Y_True[top_indices]
+                  new_y=new_y.reshape(-1,1)
 
                   # Add the selected instances to the labeled data
                   X1 = np.concatenate([X1, new_X])
@@ -326,7 +338,7 @@ class TransductiveSVM(svm.SVC):
                   #updating X3,Y3
                   X3=np.vstack((X1,X2))
                   Y3=np.vstack((Y1,Y2))
-                  print('>>>>>>>>>>>>')
+                #   print('>>>>>>>>>>>>')
 
 
                   #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -337,13 +349,12 @@ class TransductiveSVM(svm.SVC):
 
                 Y3 = Y3.reshape(-1)
 
-                print('.....')
+                # print('.....')
 
                 #slack =Y3*(self.clf.decision_function(X3))
                 slack = Y3*self.clf.decision_function(X3)
                 idx = np.argwhere(slack < 1)
                 eslackD = np.zeros(shape=slack.shape)
-                print("cccccccccccccccccccccccccccc")
 
                 for index in idx:
                     eslackD[index] = 1 - slack[index]
@@ -352,7 +363,6 @@ class TransductiveSVM(svm.SVC):
                 eslack2 = np.zeros(shape=Y2.shape)
                 eslack2 = eslackD[len(X1):]
                 condition = self.checkCondition(Y2, eslack2)
-                print("cccccccccccccccccccccccccccc")
                 #=======> predicting inside loop <===========#
 
                 weights.append(self.clf.coef_)
@@ -362,8 +372,7 @@ class TransductiveSVM(svm.SVC):
                 pred_inner_active=self.clf.predict(X2)
                 accuracy_inner=accuracy_score(Y_True,pred_inner_active)
                 f1_inner=f1_score(Y_True,pred_inner_active)
-                Active_prediction_score[l]=pred_inner_active
-                print("cccccccccccccccccccccccccccc")
+                KNN_prediction_scores[l]=pred_inner_active
 
                 print("inner iter(",l,') accuracy:',accuracy_inner)
                 print("inner iter(",l,') F1:',f1_inner)
@@ -378,6 +387,20 @@ class TransductiveSVM(svm.SVC):
 
                 pred_iter.append(accuracy_inner)
                 f1_iter.append(f1_inner)
+
+                # calculating the margine
+
+
+                margin_norm=(np.linalg.norm(self.clf.coef_))
+                margin_in=2/margin_norm
+                #obj_in=(margin_norm/2)+(self.Cl*np.sum(eslack))+C_plus*np.sum(eslack2[eslack2_positve])+C_minus*np.sum(eslack2[eslack2_negative])
+                prev_max=(2/margin_norm)+(self.Cl*np.sum(eslack))+C_plus*np.sum(eslack2)
+                prev.append(prev_max)
+
+                reg_in= (self.Cl*np.sum(eslack))+C_plus*np.sum(eslack2)
+                reg.append(reg_in)
+                all_margin.append(margin_in)
+                #obj_fun.append(obj_in)
 
 
                 counter+=1
@@ -407,7 +430,7 @@ class TransductiveSVM(svm.SVC):
         Y3=Y3.reshape(-1)
         end=time.time()
         print("The training finish in  "+str(end-t)+"  seconds")
-        return self
+        return self,f1_iter,all_margin
 
 
 
