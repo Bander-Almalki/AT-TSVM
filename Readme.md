@@ -10,7 +10,7 @@ Require python>=3.7
 ```
 git clone https://github.com/Bander-Almalki/AT-TSVM.git
 cd AT_TSVM
-conda env create -f environment.yml
+conda env create -f AT_TSVM.yml
 conda activate AT_TSVM
 ```
 ## About
@@ -38,3 +38,12 @@ conda activate AT_TSVM
 - top 2 PCAs are used.
 - To extract the complete structure-based features, please refer to [Structural_Features](https://link.springer.com/chapter/10.1007/978-3-031-34960-7_25)
 ## The main scripts:
+
+- All the scripts are located in the Scripts folder and are called using the main.py file
+- To run the AT_TSVM model, use the following:
+
+```
+python Scripts/main.py 
+```
+
+-----
